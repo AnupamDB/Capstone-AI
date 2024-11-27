@@ -1,4 +1,4 @@
-# Dumbell Curl Counter with Mediapipe
+# Curl Counter with Mediapipe
 
 ## Overview
 
