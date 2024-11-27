@@ -10,10 +10,10 @@ def calculate_angle(img, p1, p2, p3, lmList):
     x3, y3 = lmList[p3][1:]
 
     # Calculate the Angle
-    angle = math.degrees(math.atan2(y3 - y2, x3 - x2) -
-                            math.atan2(y1 - y2, x1 - x2))
-    if angle < 0:
-        angle += 360
+    angle = math.degrees(abs(math.atan2(y3 - y2, x3 - x2) -
+                            math.atan2(y1 - y2, x1 - x2)))
+    if angle > 180:
+        angle = 360-angle
 
     # Draw the lines and circles
     cv2.line(img, (x1, y1), (x2, y2), (255, 255, 255), 3)
@@ -45,10 +45,11 @@ stage = None
 with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:
     while cap.isOpened():
         ret, frame = cap.read()
-        
+        frame = cv2.flip(frame, 1)
         # Recolor image to RGB
         img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = pose.process(img)
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
         if results.pose_landmarks:
             lmList = []
@@ -59,10 +60,10 @@ with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as 
 
             if len(lmList) != 0:
                 # Calculate angle
-                angle = calculate_angle(img, 12, 14, 16, lmList)
+                angle = calculate_angle(img, 11, 13, 15, lmList)
 
-                per = np.interp(angle, (210, 310), (0, 100))
-                bar = np.interp(angle, (220, 310), (720, 100))
+                per = np.interp(angle, (50, 145), (100, 0))
+                bar = np.interp(angle, (50, 145), (100, 720))
 
                 # Check for dumbbell curls
                 color = (255, 0, 255)
@@ -87,8 +88,12 @@ with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as 
                 cv2.putText(img, str(int(count)), (45, 690), cv2.FONT_HERSHEY_PLAIN, 6, (255, 0, 0), 10)
 
         # Convert back to BGR for displaying in OpenCV
-        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+        # img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
         cv2.imshow('Mediapipe Feed', img)
+
+        # Detect if the "X" button is clicked
+        if cv2.getWindowProperty('Mediapipe Feed', cv2.WND_PROP_VISIBLE) < 1:
+            break
 
         if cv2.waitKey(10) & 0xFF == ord('q'):
             break
